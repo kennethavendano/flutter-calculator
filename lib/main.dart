@@ -39,6 +39,7 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
     '4', '5', '6', '*',
     '1', '2', '3', '-',
     'C', '0', '=', '+',
+    'x²', '%',
   ];
 
   void _onButtonPressed(String value) {
@@ -49,6 +50,12 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
         _result = '';
       } else if (value == '=') {
         _evaluateExpression();
+      } else if (value == 'x²') {
+        _applySquare();
+      } else if (value == '%') {
+        if (_expression.isNotEmpty && !_isOperator(_expression[_expression.length - 1])) {
+          _expression += '%';
+        }
       } else {
         if (_result.isNotEmpty && _expression.endsWith('=')) {
           // Start new expression after result
@@ -60,10 +67,25 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
     });
   }
 
+  void _applySquare() {
+    // Find the last number in the expression and square it
+    final reg = RegExp(r'(\d+\.?\d*)$');
+    final match = reg.firstMatch(_expression);
+    if (match != null) {
+      final number = match.group(0)!;
+      final squared = '(${number}*${number})';
+      _expression = _expression.replaceRange(match.start, match.end, squared);
+    }
+  }
+
   void _evaluateExpression() {
     try {
+      // Replace % with /100 for percentage calculation
+      String exp = _expression.replaceAllMapped(
+        RegExp(r'(\d+\.?\d*)%'),
+        (m) => '(${m[1]}/100)',
+      );
       // Remove trailing operators
-      String exp = _expression;
       while (exp.isNotEmpty && _isOperator(exp[exp.length - 1])) {
         exp = exp.substring(0, exp.length - 1);
       }
@@ -81,7 +103,7 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
   }
 
   bool _isOperator(String ch) {
-    return ch == '+' || ch == '-' || ch == '*' || ch == '/';
+    return ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '%';
   }
 
   Widget _buildButton(String value) {
@@ -91,7 +113,7 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
       bgColor = Colors.redAccent;
     } else if (value == '=') {
       bgColor = Colors.green;
-    } else if (_isOperator(value)) {
+    } else if (_isOperator(value) || value == 'x²') {
       bgColor = Colors.blueGrey;
     } else {
       bgColor = Colors.grey[800]!;
@@ -196,3 +218,4 @@ class _CalculatorHomePageState extends State<CalculatorHomePage> {
     );
   }
 }
+
